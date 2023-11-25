@@ -26,14 +26,15 @@ import { parsePageListing } from "./parser";
 import { extractGogoCDN } from "./cdn";
 
 export default class Gogoanime extends SourceModule implements VideoContent {
-  static GOGOANIME_URL = "https://gogoanimehd.io";
+  static GOGOANIME_URL = "https://anitaku.to";
   static AJAX_URL = "https://ajax.gogo-load.com/ajax";
 
   metadata = {
+    id: "gogoanime",
     name: "Gogoanime",
     description: "A scraper to watch anime content from Gogoanime.",
-    icon: "https://gogoanimehd.io/img/icon/logo.png",
-    version: "0.0.1",
+    icon: `${Gogoanime.GOGOANIME_URL}/img/icon/logo.png`,
+    version: "0.0.2",
   };
 
   async searchFilter(): Promise<SearchFilter[]> {
@@ -64,7 +65,7 @@ export default class Gogoanime extends SourceModule implements VideoContent {
     const items: DiscoverListing[] = [];
     const topAiringHTML = (
       await request.get(
-        "https://ajax.gogo-load.com/ajax/page-recent-release-ongoing.html?page=1"
+        `${Gogoanime.AJAX_URL}/page-recent-release-ongoing.html?page=1`
       )
     ).text();
     return items;
