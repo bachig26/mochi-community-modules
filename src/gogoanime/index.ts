@@ -37,8 +37,41 @@ export default class Gogoanime extends SourceModule implements VideoContent {
     version: "0.0.2",
   };
 
-  async searchFilter(): Promise<SearchFilter[]> {
-    return [];
+  async searchFilters(): Promise<SearchFilter[]> {
+    const html = (await request.get(`${Gogoanime.GOGOANIME_URL}/search.html?keyword=`)).text();
+    const $ = cheerio.load(html);
+
+    const items: SearchFilter[] = [];
+    for (const element of $(".filters > .filter > .dropdown")) {
+      const node = $(element);
+      const filterId = node.attr("class")?.replace("dropdown cls_", "");
+
+      if (filterId) {
+        const filter: SearchFilter = {
+          id: filterId,
+          displayName: filterId,
+          multiselect: filterId !== "sort",
+          required: false,
+          options: []
+        };
+
+        for (const dropdownItem of node.find(".dropdown-menu > li")) {
+          const container = $(dropdownItem);
+          const optionId = container.find("input").attr("value");
+          const optionDisplayName = container.find("label").text();
+          if (optionId) {
+            filter.options.push({
+              id: optionId,
+              displayName: optionDisplayName
+            })
+          }
+        }
+
+        items.push(filter);
+      }
+    }
+
+    return items;
   }
 
   async search(searchQuery: SearchQuery): Promise<Paging<Playlist>> {

@@ -10,4 +10,9 @@ describe("Gogoanime Tests", () => {
         const f = await module.search({ query: "attack", filters: [] });
         assert(f.items.length != 0);
     });
+
+    it("fetch search filters", async () => {
+        const f = await module.searchFilters();
+        assert(f.length != 0);
+    });
 });
