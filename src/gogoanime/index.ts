@@ -34,7 +34,7 @@ export default class Gogoanime extends SourceModule implements VideoContent {
     name: "Gogoanime",
     description: "A scraper to watch anime content from Gogoanime.",
     icon: `${Gogoanime.GOGOANIME_URL}/img/icon/logo.png`,
-    version: "0.0.2",
+    version: "0.0.1",
   };
 
   async searchFilters(): Promise<SearchFilter[]> {
@@ -44,13 +44,13 @@ export default class Gogoanime extends SourceModule implements VideoContent {
     const items: SearchFilter[] = [];
     for (const element of $(".filters > .filter > .dropdown")) {
       const node = $(element);
-      const filterId = node.attr("class")?.replace("dropdown cls_", "");
+      const filterId = node.find(".dropdown-menu input").first().attr("name");
 
       if (filterId) {
         const filter: SearchFilter = {
           id: filterId,
-          displayName: filterId,
-          multiselect: filterId !== "sort",
+          displayName: filterId.replace("[]", ""),
+          multiselect: filterId.includes("[]"),
           required: false,
           options: []
         };
@@ -76,17 +76,24 @@ export default class Gogoanime extends SourceModule implements VideoContent {
 
   async search(searchQuery: SearchQuery): Promise<Paging<Playlist>> {
     const page = searchQuery.page ?? "1";
-    const filtersEncoded = searchQuery.filters.flatMap((filter) =>
-      filter.optionIds.flatMap(
-        (id) => `${encodeURIComponent(filter.id)}=${encodeURIComponent(id)}`
-      )
-    );
-    const filters = filtersEncoded.join("&");
-    const query = encodeURIComponent(searchQuery.query);
+    const filters = searchQuery.filters.flatMap((filter) =>
+      filter.optionIds.flatMap((id) => `${filter.id}=${id}`)
+    )
+    .join("&");
 
-    let response = await request.get(
-      `${Gogoanime.GOGOANIME_URL}/search.html?keyword=${query}&page=${page}&${filters}`
-    );
+    let encodedURI: string;
+
+    if (filters.length > 0) {
+      encodedURI = encodeURI(
+        `${Gogoanime.GOGOANIME_URL}/filter.html?keyword=${searchQuery.query}&page=${page}&${filters}`
+      );
+    } else {
+      encodedURI = encodeURI(
+        `${Gogoanime.GOGOANIME_URL}/search.html?keyword=${searchQuery.query}&page=${page}`
+      );
+    }
+
+    const response = await request.get(encodedURI);
 
     const $ = cheerio.load(response.text());
     return parsePageListing($);
